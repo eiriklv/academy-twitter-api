@@ -4,6 +4,7 @@
   "description": "Twitter clone backend API",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,5 +15,8 @@
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "pg": "^8.6.0"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
