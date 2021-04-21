@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -6,7 +8,7 @@ const { getTweets, createTweet, getUserByHandle } = require('./services/database
 const { authenticate } = require('./middleware');
 
 const port = process.env.PORT;
-const secret = 'somethingverysecret1234';
+const secret = process.env.SECRET;
 
 const app = express();
 
