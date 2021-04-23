@@ -4,7 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { getTweets, createTweet, getUserByHandle } = require('./services/database');
+const bcrypt = require('bcrypt');
+const { getTweets, createTweet, getUserByHandle, createUser } = require('./services/database');
 const { authenticate } = require('./middleware');
 
 const port = process.env.PORT;
@@ -12,7 +13,14 @@ const secret = process.env.SECRET;
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.IS_LOCAL ?
+  '*' :
+  'https://academy-twitter-frontend.herokuapp.com';
+
+app.use(cors({
+  origin: allowedOrigins
+}));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -30,6 +38,28 @@ app.post('/tweets', authenticate, async (req, res) => {
   const user = req.user;
   const newTweet = await createTweet(message, user.id);
   res.send(newTweet);
+});
+
+app.post('/signup', async (req, res) => {
+  const { name, handle, password } = req.body;
+
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await createUser(name, handle, passwordHash);
+
+    const token = jwt.sign({
+      id: user.id,
+      handle: user.handle,
+      name: user.name,
+    }, Buffer.from(secret, 'base64'));
+
+    res.send({
+      token: token
+    });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
 
 app.get('/session', authenticate, (req, res) => {
@@ -50,7 +80,9 @@ app.post('/session', async (req, res) => {
       return res.status(401).send({ error: 'Unknown user' });
     }
 
-    if (user.password !== password) {
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
+
+    if (!isCorrectPassword) {
       return res.status(401).send({ error: 'Wrong password' });
     }
 

@@ -39,6 +39,22 @@ function createTweet(message, user_id) {
     .then((results) => results.rows[0]);
 }
 
+function createUser(name, handle, password) {
+  return database.query(`
+    INSERT INTO users
+      (name, handle, password)
+    VALUES
+      ($1, $2, $3)
+    RETURNING
+      *
+  `, [
+    name,
+    handle,
+    password
+  ])
+    .then((results) => results.rows[0]);
+}
+
 function getUserByHandle(handle) {
   return database.query(`
     SELECT * FROM users WHERE handle = $1
@@ -50,4 +66,5 @@ module.exports = {
   getTweets,
   createTweet,
   getUserByHandle,
+  createUser,
 };
