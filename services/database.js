@@ -24,6 +24,25 @@ function getTweets() {
     .then((results) => results.rows);
 }
 
+function getTweetsByHandle(handle) {
+  return database.query(`
+    SELECT
+      tweets.id,
+      tweets.message,
+      tweets.created_at,
+      users.name,
+      users.handle
+    FROM
+      tweets
+    INNER JOIN users ON
+      tweets.user_id = users.id
+    WHERE
+      users.handle = $1
+    ORDER BY created_at DESC;
+  `, [handle])
+    .then((results) => results.rows);
+}
+
 function createTweet(message, user_id) {
   return database.query(`
     INSERT INTO tweets
@@ -49,7 +68,7 @@ function createUser(name, handle, password) {
       *
   `, [
     name,
-    handle,
+    handle || null,
     password
   ])
     .then((results) => results.rows[0]);
@@ -67,4 +86,5 @@ module.exports = {
   createTweet,
   getUserByHandle,
   createUser,
+  getTweetsByHandle,
 };

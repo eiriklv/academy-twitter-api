@@ -5,7 +5,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { getTweets, createTweet, getUserByHandle, createUser } = require('./services/database');
+
+const {
+  getTweets,
+  createTweet,
+  getUserByHandle,
+  createUser,
+  getTweetsByHandle
+} = require('./services/database');
+
 const { authenticate } = require('./middleware');
 
 const port = process.env.PORT;
@@ -30,6 +38,12 @@ app.get('/', (req, res) => {
 
 app.get('/tweets', async (req, res) => {
   const tweets = await getTweets();
+  res.send(tweets);
+});
+
+app.get('/tweets/:handle', async (req, res) => {
+  const { handle } = req.params;
+  const tweets = await getTweetsByHandle(handle);
   res.send(tweets);
 });
 
@@ -58,9 +72,19 @@ app.post('/signup', async (req, res) => {
       token: token
     });
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    const humanReadableError = getHumanReadableError(error);
+    res.status(500).send({ error: humanReadableError.message });
   }
 });
+
+function getHumanReadableError(error) {
+  switch (error.code) {
+    case '23502':
+      return new Error('Must provide username');
+    default:
+      return new Error('Something went wrong - contact support');
+  }
+}
 
 app.get('/session', authenticate, (req, res) => {
   const { handle } = req.user;
